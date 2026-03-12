@@ -42,17 +42,21 @@
 | F6 | **Email Notifications** | P0 | Order confirmation email to user on successful placement |
 | F7 | **AI Chatbot** | P0 | Natural language chatbot for food recommendations |
 | F8 | **Responsive Design** | P0 | Mobile-first, works on all devices |
+| F9 | **Meal Plans** | P0 | Pre-made weekly meal plans (Vegetarian, Vegan, Combination, Meat) at Budget (<$60), Standard (<$80), and Premium ($80+) tiers. Custom meal plan builder with menu browser. |
+| F10 | **Order Scheduling** | P0 | Schedule delivery for a future date/time from checkout page |
+| F11 | **Cart-Aware Chatbot** | P0 | AI chatbot knows current cart contents; answers scheduling/checkout questions with cart context |
+| F12 | **Menu Item Images** | P0 | High-quality food photos for all menu items (Unsplash), with emoji fallback |
 
 ### Phase 2 — Post-MVP (Future)
 
 | # | Feature | Priority |
 |---|---|---|
-| F9 | Payment gateway integration (Stripe/Razorpay) | P1 |
-| F10 | Order history & reordering | P1 |
-| F11 | Real-time order tracking | P2 |
-| F12 | Reviews & ratings | P2 |
-| F13 | Loyalty/rewards program | P3 |
-| F14 | Multi-language support | P3 |
+| F13 | Payment gateway integration (Stripe/Razorpay) | P1 |
+| F14 | Order history & reordering | P1 |
+| F15 | Real-time order tracking | P2 |
+| F16 | Reviews & ratings | P2 |
+| F17 | Loyalty/rewards program | P3 |
+| F18 | Multi-language support | P3 |
 
 ---
 
@@ -68,8 +72,9 @@
 | **Database** | **Supabase (PostgreSQL)** | Free tier: 500MB DB, 1GB storage, built-in Auth, REST API, real-time |
 | **Authentication** | **Supabase Auth** | Free, email/password sign-up, magic links, OAuth ready |
 | **Email Service** | **Resend** (or **EmailJS**) | Resend: 3,000 free emails/month; simple API |
-| **AI/Chatbot** | **OpenAI API (GPT-4o-mini)** | Cheapest capable model (~$0.15/1M input tokens); natural language understanding |
-| **AI Alternative** | **Google Gemini API (free tier)** | 15 requests/min free; good fallback to keep costs at $0 |
+| **AI/Chatbot** | **OpenAI API (GPT-4o-mini) + LangChain** | LangChain framework for chains, prompt templates, memory management; GPT-4o-mini as LLM (~$0.15/1M input tokens) |
+| **AI Framework** | **LangChain.js** | Structured prompt management, message-based conversation history, composable chains, easy model switching |
+| **AI Alternative** | **Google Gemini API (free tier)** | 15 requests/min free; LangChain makes model switching trivial |
 | **Hosting** | **Vercel** | Free tier for Next.js; automatic deployments from Git |
 | **Image Storage** | **Supabase Storage** | Free 1GB; serves menu item images |
 | **Version Control** | **GitHub** | Free private repos |
@@ -124,7 +129,8 @@ Next.js **is** React — it's a full-stack framework built on top of React, not 
 - `next`, `react`, `react-dom` — core framework
 - `tailwindcss`, `postcss`, `autoprefixer` — styling
 - `@supabase/supabase-js`, `@supabase/ssr` — database & auth client
-- `openai` — AI API client
+- `langchain`, `@langchain/openai`, `@langchain/core` — AI framework (chains, prompts, memory)
+- `openai` — OpenAI SDK (used by LangChain internally)
 - `resend` — email service SDK
 - `zod` — runtime input validation & security
 - `typescript`, `@types/react`, `@types/node` — type safety
@@ -324,7 +330,7 @@ CREATE INDEX idx_orders_user ON orders(user_id);
 
 ---
 
-## 6. AI Chatbot — Design
+## 6. AI Chatbot — Design (LangChain-Powered)
 
 ### 6.1 How It Works
 
@@ -332,74 +338,111 @@ CREATE INDEX idx_orders_user ON orders(user_id);
 User Input (natural language)
         │
         ▼
-┌─────────────────────┐
-│  Next.js /api/chat  │
-│                     │
-│  1. Send user query │──────────────────────┐
-│     + menu context  │                      │
-│     to OpenAI       │                      ▼
-│                     │              ┌──────────────┐
-│  2. OpenAI returns  │◄─────────────│   OpenAI API │
-│     structured JSON │              │  (GPT-4o-mini)│
-│     with filters    │              └──────────────┘
-│                     │
-│  3. Query Supabase  │
-│     with filters    │
-│                     │
-│  4. Return ranked   │
-│     recommendations │
-└─────────┬───────────┘
+┌───────────────────────────┐
+│    Next.js /api/chat      │
+│                           │
+│  1. Build LangChain chain │
+│     (ChatPromptTemplate + │
+│      ChatOpenAI + Parser) │──────────────────────┐
+│                           │                      │
+│  2. Pass user query +     │                      ▼
+│     menu context +        │              ┌──────────────┐
+│     chat history          │              │   OpenAI API │
+│     (message history)     │              │  (GPT-4o-mini)│
+│                           │              └──────┬───────┘
+│  3. LangChain returns     │◄─────────────────────┘
+│     structured JSON with  │
+│     intent + filters      │
+│                           │
+│  4. Route by intent:      │
+│     - recommendation →    │
+│       filter menu items   │
+│     - not_available →     │
+│       find similar items  │
+│     - meal_plan →         │
+│       structured plan     │
+│     - schedule_order →    │
+│       confirm scheduling  │
+│     - off_topic →         │
+│       polite rejection    │
+│                           │
+│  5. Return ranked results │
+└─────────┬─────────────────┘
           │
           ▼
-   Chatbot UI shows
-   recommendation cards
-   with "Add to Cart" button
+   Chatbot UI shows:
+   - Recommendation cards with "Add to Cart"
+   - Meal plan cards (weekly view)
+   - Follow-up suggestion chips
+   - Schedule order badges
 ```
 
-### 6.2 AI System Prompt (Template)
+### 6.2 LangChain Architecture
 
-```
-You are "DQB Bot", the AI food assistant for Desi Quick Bite restaurant.
+The chatbot uses a **LangChain RunnableSequence** chain:
 
-Your job is to help customers find the perfect dish based on their preferences.
-
-When a user asks for food recommendations, extract the following from their message:
-- budget_max: maximum price (number or null)
-- budget_min: minimum price (number or null)  
-- cuisine: preferred cuisine type (string or null)
-- dietary: dietary restrictions ["vegetarian", "vegan", "gluten_free"] or []
-- mood: eating mood ["comfort", "light", "celebratory", "spicy", "healthy"] or []
-- max_calories: maximum calories per serving (number or null)
-- min_protein: minimum protein in grams (number or null)
-- max_carbs: maximum carbs in grams (number or null)
-- max_fat: maximum fat in grams (number or null)
-- query_text: general search terms (string)
-
-Respond ONLY with valid JSON in this format:
-{
-  "message": "A friendly, short response to the user",
-  "filters": { ... extracted filters above ... },
-  "intent": "recommendation" | "question" | "greeting" | "other"
-}
+```typescript
+// Chain: ChatPromptTemplate → ChatOpenAI → StringOutputParser
+const chain = RunnableSequence.from([
+  ChatPromptTemplate.fromMessages([
+    ["system", SYSTEM_PROMPT],       // Includes menu context
+    new MessagesPlaceholder("chat_history"),  // Conversation memory
+    ["human", "{input}"],
+  ]),
+  new ChatOpenAI({ modelName: "gpt-4o-mini" }),
+  new StringOutputParser(),
+]);
 ```
 
-### 6.3 Example Conversations
+**Key LangChain features used:**
+- `SystemMessage` + `HumanMessage` + `AIMessage` — structured message-based prompts
+- Message history: last 10 exchanges passed as `BaseMessage[]` per request
+- `ChatOpenAI` → `StringOutputParser` — model invocation pipeline
+- Session tracking with automatic TTL cleanup (30 min)
+- Randomized recommendation results for varied suggestions on repeated queries
 
-| User Says | Bot Extracts | Bot Recommends |
+### 6.3 Intent Types
+
+| Intent | Description | Bot Behavior |
 |---|---|---|
-| "Something spicy under $12" | budget_max: 12, mood: ["spicy"] | Spicy Paneer Tikka ($9.99), Chicken Vindaloo ($11.49) |
-| "High protein, low carb meal" | min_protein: 30, max_carbs: 20 | Tandoori Chicken ($13.99, 42g protein, 8g carbs) |
-| "I'm feeling sad, comfort food please" | mood: ["comfort"] | Butter Chicken, Dal Makhani, Kheer |
-| "Vegan options for a family of 4 under $40" | dietary: ["vegan"], budget_max: 40 | Chana Masala, Aloo Gobi, Veg Biryani, Gulab Jamun (vegan) |
-| "What's the healthiest thing you have?" | mood: ["healthy"], sort by calories asc | Tandoori Salad (180 cal), Grilled Fish (220 cal) |
+| `recommendation` | User wants food suggestions | Extract filters → query menu → show results |
+| `not_available` | Dish not on menu | Apologize → show similar alternatives |
+| `meal_plan` | Weekly meal planning | Ask follow-ups → build structured weekly plan |
+| `schedule_order` | Schedule future order | Confirm day → ask what to order |
+| `off_topic` | Unrelated message | Politely decline, redirect to food |
+| `clarification` | Vague/incomplete message | Ask for more details |
+| `greeting` | Hello/hi | Welcome message with capabilities |
+| `question` | About restaurant/dish | Answer helpfully |
 
-### 6.4 Chatbot UI
+### 6.4 Example Conversations
+
+| User Says | Intent | Bot Behavior |
+|---|---|---|
+| "Something spicy under $12" | recommendation | Filters: budget_max=12, mood=["spicy"] → shows matching dishes |
+| "I want vegan food" | recommendation | Immediately shows vegan options, no lecture |
+| "I want butter chicken" | recommendation | Confirms available, asks: "Spicy or mild? Want naan with it?" |
+| User clicks Add on recommendation | — | Item added to cart; click again to remove (toggle) |
+| Meal plan generated | meal_plan | Each meal shows Add/Remove button to add to cart |
+| "Show me vegan food" (repeated) | recommendation | Returns randomized selection from matching items each time |
+| "Do you have pizza?" | not_available | "Sorry, no pizza. Try: Stuffed Paratha, Paneer Kathi Roll" |
+| "Plan my meals for the week" | meal_plan | Asks budget/diet → returns 7-day plan with prices & calories |
+| "Schedule order for Friday" | schedule_order | "Got it! What would you like for Friday?" |
+| "What's the weather today?" | off_topic | "I can only help with food! What are you craving?" |
+| "asdf" | clarification | "I didn't understand. Try: 'spicy food under $12'" |
+| "High protein low carb" | recommendation | Filters: min_protein=30, max_carbs=20 → shows matching |
+
+### 6.5 Chatbot UI
 
 - **Floating chat bubble** (bottom-right corner)
 - Expandable chat window with message history
-- Recommendation cards with: image, name, price, calories, "Add to Cart" button
-- Quick-prompt chips: "🌶️ Spicy", "💪 High Protein", "💰 Under $10", "🥗 Healthy"
+- **LangChain powered** badge in header
+- Recommendation cards with: name, price, calories, protein, "Add to Cart" button
+- **Meal plan cards** — weekly view with daily meals, prices, and calorie totals
+- **Schedule order badges** — shows confirmed scheduling day
+- **Follow-up suggestion chips** — clickable AI-suggested follow-up questions
+- Quick-prompt chips: "🌶️ Spicy", "💪 High Protein", "💰 Under $10", "🥗 Healthy", "📅 Meal Plan", "⏰ Schedule"
 - Typing indicator while AI processes
+- Session-based conversation memory (persists across messages, resets on page refresh)
 
 ---
 

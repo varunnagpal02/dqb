@@ -1,0 +1,36 @@
+User Scenario: Random unrelated message
+Current Behavior: show positive response even if data is not available or message is incomplete without any context.
+Expected Behavior: Show regret response about the msg that you dont understand and positive when data is available along with the data.
+
+User Scenario: Specific food options like vegan or chicken
+Current Behavior: Doesn't give options
+Expected Behavior: Should give options and not give lecture on food choices
+
+User Scenario: User asked for particular dish
+Current Behavior: Asking too many questions
+Expected Behavior: chatbot should ask follow up question relevant to the dishlike if they want spicy or mild or anything particular or budget and then show response based the conversation.
+
+User Scenario: User asked for a dish which is not available
+Current Behavior: no response 
+Expected Behavior: Show regret ang give similar options
+
+User Scenario: User want to create a meal plan for entire week
+Current Behavior: Currently no response
+Expected Behavior: ask for follow up questions like budget give some choices. can give dietary options later
+
+User Scenario: User want to schedule order for some day
+Current Behavior: nothing happens
+Expected Behavior: Schedule for that day
+
+User Scenario: User want to remove item once it is added from the chatbot
+Current Behavior: nothing happens
+Expected Behavior: give option to remove added item or when use click again the item it should be removed
+
+User Scenario: User want mealplan with budget
+Current Behavior: Currently it generate mealplan in JSON format
+Expected Behavior: AL chat bot should give meal plan with option to add the items to the cart. They can select
+
+User Scenario: User ask for meals like vegan, vegeratrian or items like chicken items
+Current Behavior: gives same items on every response kind a same template
+Expected Behavior: Based on the chat, agent should check the menu items, find one which matched the seach and provide appropriate response with matched menu items.
+

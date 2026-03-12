@@ -29,6 +29,8 @@ export default function CheckoutPage() {
     city: "",
     zipCode: "",
     instructions: "",
+    scheduleDate: "",
+    scheduleTime: "",
     subscribeEmail: true,
   });
 
@@ -121,6 +123,8 @@ export default function CheckoutPage() {
         customer_phone: formData.phone,
         delivery_address: `${formData.address}, ${formData.city} ${formData.zipCode}`,
         special_instructions: formData.instructions,
+        scheduled_date: formData.scheduleDate || null,
+        scheduled_time: formData.scheduleTime || null,
         subscribe_email: formData.subscribeEmail,
         promo_code: appliedPromo || null,
         discount: discount,
@@ -245,6 +249,71 @@ export default function CheckoutPage() {
               placeholder="Any special requests? Allergies? Delivery notes?"
               rows={3}
             />
+          </div>
+
+          {/* Promo Code */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              📅 Schedule Order
+            </h2>
+            <p className="text-sm text-gray-500">
+              Want your order at a specific date/time? Leave empty for ASAP delivery.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  type="date"
+                  name="scheduleDate"
+                  value={formData.scheduleDate}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                <select
+                  name="scheduleTime"
+                  value={formData.scheduleTime}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, scheduleTime: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="">Select a time</option>
+                  <option value="11:00">11:00 AM</option>
+                  <option value="11:30">11:30 AM</option>
+                  <option value="12:00">12:00 PM</option>
+                  <option value="12:30">12:30 PM</option>
+                  <option value="13:00">1:00 PM</option>
+                  <option value="13:30">1:30 PM</option>
+                  <option value="14:00">2:00 PM</option>
+                  <option value="17:00">5:00 PM</option>
+                  <option value="17:30">5:30 PM</option>
+                  <option value="18:00">6:00 PM</option>
+                  <option value="18:30">6:30 PM</option>
+                  <option value="19:00">7:00 PM</option>
+                  <option value="19:30">7:30 PM</option>
+                  <option value="20:00">8:00 PM</option>
+                  <option value="20:30">8:30 PM</option>
+                  <option value="21:00">9:00 PM</option>
+                </select>
+              </div>
+            </div>
+            {formData.scheduleDate && (
+              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                <p className="text-blue-800 text-sm font-medium">
+                  📅 Scheduled for {new Date(formData.scheduleDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                  {formData.scheduleTime ? ` at ${formData.scheduleTime.startsWith("1") && parseInt(formData.scheduleTime) >= 13 ? `${parseInt(formData.scheduleTime) - 12}:${formData.scheduleTime.split(":")[1]} PM` : formData.scheduleTime.startsWith("2") ? `${parseInt(formData.scheduleTime) - 12}:${formData.scheduleTime.split(":")[1]} PM` : `${formData.scheduleTime} AM`}` : ""}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, scheduleDate: "", scheduleTime: "" }))}
+                  className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Promo Code */}

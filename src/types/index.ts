@@ -123,12 +123,39 @@ export interface OrderItem {
 }
 
 // --- Chat ---
+export type ChatIntent =
+  | "recommendation"
+  | "question"
+  | "greeting"
+  | "off_topic"
+  | "not_available"
+  | "meal_plan"
+  | "schedule_order"
+  | "clarification"
+  | "other"
+  | "error";
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   recommendations?: MenuItem[];
+  intent?: ChatIntent;
+  follow_up?: string | null;
+  meal_plan?: MealPlan | null;
+  schedule_day?: string | null;
   timestamp: Date;
+}
+
+export interface MealPlanDay {
+  day: string;
+  meals: { name: string; price: number; calories: number }[];
+}
+
+export interface MealPlan {
+  days: MealPlanDay[];
+  total_budget?: number;
+  total_calories_per_day?: number;
 }
 
 export interface ChatFilters {
@@ -142,12 +169,20 @@ export interface ChatFilters {
   max_carbs: number | null;
   max_fat: number | null;
   query_text: string;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  is_gluten_free?: boolean;
+  spice_level?: string | null;
+  max_price?: number | null;
 }
 
 export interface ChatAIResponse {
   message: string;
   filters: ChatFilters;
-  intent: "recommendation" | "question" | "greeting" | "other";
+  intent: ChatIntent;
+  follow_up?: string | null;
+  meal_plan?: MealPlan | null;
+  schedule_day?: string | null;
 }
 
 // --- API Response ---

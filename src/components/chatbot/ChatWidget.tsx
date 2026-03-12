@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, X, Send, Loader2 } from "lucide-react";
-import { ChatMessage as ChatMessageType } from "@/types";
+import { ChatMessage as ChatMessageType, MealPlan } from "@/types";
 import { generateId } from "@/lib/utils";
+import { useCart } from "@/hooks/useCart";
+import { menuItems as seedMenuItems } from "@/data/seed-menu";
 import ChatMessage from "./ChatMessage";
 import RecommendationCard from "./RecommendationCard";
 import QuickPrompts from "./QuickPrompts";
@@ -13,8 +15,10 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(() => generateId());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { items: cartItems, subtotal } = useCart();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -45,7 +49,7 @@ export default function ChatWidget() {
           id: generateId(),
           role: "assistant",
           content:
-            "Hi there! 👋 I'm DQB Bot, your food assistant. Tell me what you're craving — I can suggest dishes based on your mood, budget, diet, or macros!\n\nTry something like: \"spicy food under $12\" or \"high protein vegan meal\"",
+            "Hi there! 👋 I'm DQB Bot, your food assistant. I can help you:\n\n🍽️ Find dishes by mood, budget, or diet\n💪 Get macro-friendly recommendations\n📅 Plan meals for the week\n⏰ Schedule orders for later\n\nWhat are you in the mood for?",
           timestamp: new Date(),
         },
       ]);
@@ -67,15 +71,22 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
+      // Build cart summary for context
+      const cartSummary = cartItems.length > 0
+        ? cartItems.map((ci) => `${ci.menu_item.name} x${ci.quantity} ($${(ci.menu_item.price * ci.quantity).toFixed(2)})`).join(", ") + ` | Total: $${subtotal.toFixed(2)}`
+        : "";
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text.trim(),
-          history: messages.slice(-6).map((m) => ({
+          history: messages.slice(-10).map((m) => ({
             role: m.role,
             content: m.content,
           })),
+          sessionId,
+          cartSummary,
         }),
       });
 
@@ -86,6 +97,10 @@ export default function ChatWidget() {
         role: "assistant",
         content: data.reply || data.message || "I couldn't process that. Please try again!",
         recommendations: data.recommendations || [],
+        intent: data.intent || "other",
+        follow_up: data.follow_up || null,
+        meal_plan: data.meal_plan || null,
+        schedule_day: data.schedule_day || null,
         timestamp: new Date(),
       };
 
@@ -138,7 +153,7 @@ export default function ChatWidget() {
               <span className="text-xl">🤖</span>
               <div>
                 <h3 className="text-white font-semibold text-sm">DQB Bot</h3>
-                <p className="text-orange-100 text-xs">AI Food Assistant</p>
+                <p className="text-orange-100 text-xs">AI Food Assistant • LangChain powered</p>
               </div>
             </div>
             <button
@@ -154,12 +169,34 @@ export default function ChatWidget() {
             {messages.map((msg) => (
               <div key={msg.id}>
                 <ChatMessage message={msg} />
+                {/* Recommendation cards */}
                 {msg.recommendations && msg.recommendations.length > 0 && (
                   <div className="mt-2 space-y-2">
                     {msg.recommendations.map((item) => (
-                      <RecommendationCard key={item.id} item={item} />
+                      <RecommendationCard key={item.id || item.name} item={item} />
                     ))}
                   </div>
+                )}
+                {/* Meal plan display */}
+                {msg.meal_plan && msg.meal_plan.days && (
+                  <MealPlanCard mealPlan={msg.meal_plan} />
+                )}
+                {/* Schedule order badge */}
+                {msg.schedule_day && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                    <span>📅</span>
+                    <span>Scheduled for {msg.schedule_day}</span>
+                  </div>
+                )}
+                {/* Follow-up suggestion chip */}
+                {msg.follow_up && msg.role === "assistant" && (
+                  <button
+                    onClick={() => sendMessage(msg.follow_up!)}
+                    className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-700 rounded-full text-xs font-medium hover:bg-orange-100 transition-colors border border-orange-200"
+                  >
+                    <span>💡</span>
+                    <span>{msg.follow_up}</span>
+                  </button>
                 )}
               </div>
             ))}
@@ -204,5 +241,115 @@ export default function ChatWidget() {
         </div>
       )}
     </>
+  );
+}
+
+// ---- Meal Plan Card component with Add to Cart ----
+function MealPlanCard({ mealPlan }: { mealPlan: MealPlan }) {
+  const { items: cartItems, addItem, removeItem } = useCart();
+
+  // Generate a consistent slug-id matching the API route format
+  const toSlugId = (name: string) => name.toLowerCase().replace(/\s+/g, "-");
+
+  // Lookup a real menu item by name (fuzzy) and convert to MenuItem shape for cart
+  const findMenuItemForCart = (mealName: string) => {
+    const lower = mealName.toLowerCase().trim();
+    const seed = seedMenuItems.find(
+      (item) =>
+        item.name.toLowerCase() === lower ||
+        item.name.toLowerCase().includes(lower) ||
+        lower.includes(item.name.toLowerCase())
+    );
+    if (!seed) return null;
+    // Convert SeedMenuItem to MenuItem shape with generated id
+    return {
+      id: toSlugId(seed.name),
+      category_id: "",
+      name: seed.name,
+      description: seed.description,
+      price: seed.price,
+      image_url: null,
+      is_vegetarian: seed.is_vegetarian,
+      is_vegan: seed.is_vegan,
+      is_gluten_free: seed.is_gluten_free,
+      is_spicy: seed.is_spicy,
+      spice_level: seed.spice_level,
+      calories: seed.calories,
+      protein_g: seed.protein_g,
+      carbs_g: seed.carbs_g,
+      fat_g: seed.fat_g,
+      fiber_g: seed.fiber_g,
+      mood_tags: seed.mood_tags,
+      keywords: seed.keywords,
+      is_available: true,
+      is_active: true,
+      sort_order: seed.sort_order,
+      created_at: "",
+      updated_at: "",
+    };
+  };
+
+  const isInCart = (mealName: string) => {
+    const menuItem = findMenuItemForCart(mealName);
+    if (!menuItem) return false;
+    return cartItems.some((ci) => ci.menu_item.id === menuItem.id);
+  };
+
+  const handleToggleMeal = (mealName: string) => {
+    const menuItem = findMenuItemForCart(mealName);
+    if (!menuItem) return;
+    if (cartItems.some((ci) => ci.menu_item.id === menuItem.id)) {
+      removeItem(menuItem.id);
+    } else {
+      addItem(menuItem);
+    }
+  };
+
+  return (
+    <div className="mt-2 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3 text-sm">
+      <div className="flex items-center gap-1.5 font-semibold text-green-800 mb-2">
+        <span>📋</span>
+        <span>Your Meal Plan</span>
+      </div>
+      <div className="space-y-2">
+        {mealPlan.days.map((day) => (
+          <div key={day.day} className="bg-white/70 rounded-lg p-2">
+            <div className="font-medium text-green-700 text-xs mb-1">{day.day}</div>
+            <div className="space-y-1">
+              {day.meals.map((meal, i) => {
+                const menuItem = findMenuItemForCart(meal.name);
+                const inCart = isInCart(meal.name);
+                return (
+                  <div key={i} className="flex items-center justify-between text-xs text-gray-600">
+                    <span className="flex-1 truncate">{meal.name}</span>
+                    <span className="text-green-600 font-medium mx-2 whitespace-nowrap">
+                      ${meal.price?.toFixed(2)} • {meal.calories} cal
+                    </span>
+                    {menuItem && (
+                      <button
+                        onClick={() => handleToggleMeal(meal.name)}
+                        className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                          inCart
+                            ? "bg-red-100 text-red-600 hover:bg-red-200"
+                            : "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                        }`}
+                      >
+                        {inCart ? "Remove" : "Add"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      {(mealPlan.total_budget || mealPlan.total_calories_per_day) && (
+        <div className="mt-2 pt-2 border-t border-green-200 flex justify-between text-xs text-green-700 font-medium">
+          {mealPlan.total_budget && <span>Total: ${mealPlan.total_budget.toFixed(2)}/week</span>}
+          {mealPlan.total_calories_per_day && <span>~{mealPlan.total_calories_per_day} cal/day</span>}
+        </div>
+      )}
+    </div>
   );
 }

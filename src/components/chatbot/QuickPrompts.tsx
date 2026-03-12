@@ -11,8 +11,10 @@ const prompts = [
   { emoji: "💪", label: "High Protein", query: "High protein low carb meal" },
   { emoji: "💰", label: "Under $10", query: "Best dishes under $10" },
   { emoji: "🥗", label: "Healthy", query: "Healthy low calorie options" },
-  { emoji: "🌱", label: "Vegan", query: "Vegan friendly dishes" },
+  { emoji: "🌱", label: "Vegan", query: "Show me vegan dishes" },
   { emoji: "🎉", label: "Party", query: "Dishes for a celebration" },
+  { emoji: "📅", label: "Meal Plan", query: "Help me plan meals for the week" },
+  { emoji: "⏰", label: "Schedule", query: "I want to schedule an order" },
 ];
 
 export default function QuickPrompts({ onSelect }: QuickPromptsProps) {
