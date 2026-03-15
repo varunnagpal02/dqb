@@ -16,7 +16,7 @@ export default function CartItemCard({ item }: CartItemProps) {
   return (
     <div className="flex items-start gap-4 py-4 border-b border-gray-100 last:border-0">
       {/* Image placeholder */}
-      <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center flex-shrink-0">
+      <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center flex-shrink-0">
         <span className="text-3xl">
           {item.menu_item.is_vegetarian ? "🥬" : "🍗"}
         </span>
@@ -47,13 +47,13 @@ export default function CartItemCard({ item }: CartItemProps) {
           </span>
           <button
             onClick={() => updateQuantity(item.menu_item.id, item.quantity + 1)}
-            className="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center hover:bg-orange-200 transition-colors"
+            className="w-7 h-7 rounded-full bg-orange-600/20 text-orange-400 flex items-center justify-center hover:bg-orange-600/30 transition-colors"
           >
             <Plus className="w-3 h-3" />
           </button>
           <button
             onClick={() => removeItem(item.menu_item.id)}
-            className="ml-2 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="ml-2 p-1.5 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" />
           </button>

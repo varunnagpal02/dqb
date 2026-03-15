@@ -3,9 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import ChatWidget from "@/components/chatbot/ChatWidget";
+import { DeliveryProvider } from "@/context/DeliveryContext";
+import LayoutShell from "@/components/layout/LayoutShell";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,13 +28,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased bg-gray-50 min-h-screen flex flex-col`}>
+      <body className={`${inter.className} antialiased bg-white min-h-screen flex flex-col`}>
         <CartProvider>
           <AuthProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <ChatWidget />
+            <DeliveryProvider>
+            <LayoutShell>{children}</LayoutShell>
+            </DeliveryProvider>
           </AuthProvider>
         </CartProvider>
       </body>

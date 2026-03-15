@@ -51,6 +51,7 @@ export interface MenuItem {
   // AI metadata
   mood_tags: string[];
   keywords: string[];
+  is_recommended?: boolean;
 
   // Status
   is_available: boolean;
@@ -203,5 +204,17 @@ export interface MenuFilters {
   maxPrice?: number;
   minPrice?: number;
   maxCalories?: number;
-  sortBy?: "price_asc" | "price_desc" | "name" | "calories";
+  sortBy?: "price_asc" | "price_desc" | "name" | "calories" | "recommended" | "protein_desc";
+}
+
+// --- Delivery ---
+export interface DeliveryState {
+  address: string;
+  city: string;
+  zipCode: string;
+  isServiceable: boolean;
+  orderTiming: "now" | "scheduled";
+  scheduledDate: string;
+  scheduledTime: string;
+  hasEnteredAddress: boolean;
 }

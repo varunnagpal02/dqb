@@ -1,8 +1,8 @@
 # 🧪 Desi Quick Bite — Test Plan & Test Cases
 
-> **Version:** 1.0  
-> **Date:** December 2024  
-> **Coverage:** UI Components, Pages, API Routes, Context/State, AI Chatbot, Admin, E2E Flows
+> **Version:** 2.0  
+> **Date:** March 14, 2026  
+> **Coverage:** UI Components, Pages, API Routes, Context/State, AI Chatbot, Admin, E2E Flows, Phase 2 Features
 
 ---
 
@@ -662,6 +662,100 @@ ADMIN_EMAIL=admin@dqb.com
 | IT-CHAT-006 | Macro-based query | "High protein low carb" | Items filtered by protein/carbs | ⬜ |
 | IT-CHAT-007 | Mood-based query | "I want comfort food" | Items with "comfort" mood tag | ⬜ |
 | IT-CHAT-008 | Error recovery | API fails → user sends another | New message works normally | ⬜ |
+
+---
+
+## 24. Phase 2 — Serviceability Tests (Automated ✅)
+
+> **File:** `src/__tests__/phase2.test.ts` — 68 tests, all passing
+
+| ID | Test Case | Input | Expected | Status |
+|---|---|---|---|---|
+| P2-SVC-001 | Serviceable ZIP | 10001 | isServiceable = true | ✅ |
+| P2-SVC-002 | Serviceable city | Manhattan | isServiceable = true | ✅ |
+| P2-SVC-003 | Case-insensitive city | "BROOKLYN" | isServiceable = true | ✅ |
+| P2-SVC-004 | Not serviceable | ZIP 99999, city "Timbuktu" | isServiceable = false | ✅ |
+| P2-SVC-005 | Empty strings | "", "" | isServiceable = false | ✅ |
+| P2-SVC-006 | Whitespace-padded ZIP | "  10001  " | isServiceable = true | ✅ |
+| P2-SVC-007 | Jersey City ZIP | 07302 | isServiceable = true | ✅ |
+| P2-SVC-008 | City match with bad ZIP | ZIP 11111, city "jersey city" | isServiceable = true | ✅ |
+
+## 25. Phase 2 — Seed Data Tests (Automated ✅)
+
+| ID | Test Case | Input | Expected | Status |
+|---|---|---|---|---|
+| P2-SD-001 | Recommended items exist | menuItems filter | >0 recommended | ✅ |
+| P2-SD-002 | At least 8 recommended | menuItems filter | ≥8 items | ✅ |
+| P2-SD-003 | Butter Chicken recommended | name match | is_recommended = true | ✅ |
+| P2-SD-004 | Masala Dosa recommended | name match | is_recommended = true | ✅ |
+| P2-SD-005 | Chicken Biryani recommended | name match | is_recommended = true | ✅ |
+| P2-SD-006 | Paneer Tikka recommended | name match | is_recommended = true | ✅ |
+| P2-SD-007 | Not all items recommended | count | < total items | ✅ |
+| P2-SD-008 | Breakfast tag exists | mood_tags filter | >0 items | ✅ |
+| P2-SD-009 | Lunch tag exists | mood_tags filter | >0 items | ✅ |
+| P2-SD-010 | Dinner tag exists | mood_tags filter | >0 items | ✅ |
+| P2-SD-011 | Deal tag exists | mood_tags filter | >0 items | ✅ |
+| P2-SD-012 | Idli has breakfast tag | mood_tags | contains "breakfast" | ✅ |
+| P2-SD-013 | Butter Chicken has dinner | mood_tags | contains "dinner" | ✅ |
+
+## 26. Phase 2 — Quick Nav & Filter Tests (Automated ✅)
+
+| ID | Test Case | Input | Expected | Status |
+|---|---|---|---|---|
+| P2-NAV-001 | Appetizers filter | ni-starters, ic-starters, sf-chaat | >0 results | ✅ |
+| P2-NAV-002 | Mains filter | ni-main-course, si-mains, ic-noodles-rice | >0 results | ✅ |
+| P2-NAV-003 | Breads filter | ni-breads | >0 results | ✅ |
+| P2-NAV-004 | Drinks filter | b-hot, b-cold | >0 results | ✅ |
+| P2-NAV-005 | North Indian cuisine | cuisine slug filter | >10 items | ✅ |
+| P2-NAV-006 | South Indian cuisine | cuisine slug filter | >0 items | ✅ |
+| P2-NAV-007 | Breakfast mood filter | mood_tags includes "breakfast" | >3 items | ✅ |
+| P2-NAV-008 | Dinner mood filter | mood_tags includes "dinner" | >3 items | ✅ |
+
+## 27. Phase 2 — Enhanced Sort & Advanced Filter Tests (Automated ✅)
+
+| ID | Test Case | Input | Expected | Status |
+|---|---|---|---|---|
+| P2-SORT-001 | Sort price ascending | sort | each ≥ prev | ✅ |
+| P2-SORT-002 | Sort price descending | sort | each ≤ prev | ✅ |
+| P2-SORT-003 | Sort calories ascending | sort | each ≥ prev | ✅ |
+| P2-SORT-004 | Sort protein descending | sort | each ≤ prev | ✅ |
+| P2-SORT-005 | Recommended first | default sort | recommended before others | ✅ |
+| P2-FILT-001 | Max price $10 | filter | all ≤ $10 | ✅ |
+| P2-FILT-002 | Max calories 300 | filter | all ≤ 300 | ✅ |
+| P2-FILT-003 | Spice level mild | filter ≤ 1 | all ≤ 1 | ✅ |
+| P2-FILT-004 | Veg + price combo | filter | all veg AND ≤ $8 | ✅ |
+| P2-FILT-005 | Vegan + calorie combo | filter | all vegan AND ≤ 300 | ✅ |
+
+## 28. Phase 2 — Smart Search & Validation Tests (Automated ✅)
+
+| ID | Test Case | Input | Expected | Status |
+|---|---|---|---|---|
+| P2-SRCH-001 | Detect price query | "under $10" | isSmartQuery = true | ✅ |
+| P2-SRCH-002 | Detect macro query | "high protein" | isSmartQuery = true | ✅ |
+| P2-SRCH-003 | Detect mood query | "comfort food" | isSmartQuery = true | ✅ |
+| P2-SRCH-004 | Plain dish name | "butter chicken" | isSmartQuery = false | ✅ |
+| P2-GATE-001 | Block unserviceable | hasEntered + !serviceable | shouldBlock = true | ✅ |
+| P2-GATE-002 | Allow serviceable | hasEntered + serviceable | shouldBlock = false | ✅ |
+| P2-GATE-003 | Allow no address | !hasEntered | shouldBlock = false | ✅ |
+| P2-FORM-001 | Valid "now" form | address + city + zip | canProceed = true | ✅ |
+| P2-FORM-002 | Missing address | empty + city + zip | canProceed = false | ✅ |
+| P2-FORM-003 | Valid "scheduled" form | all fields + date + time | canProceed = true | ✅ |
+| P2-FORM-004 | Missing date | scheduled, no date | canProceed = false | ✅ |
+
+## 29. Phase 2 — Data Integrity Tests (Automated ✅)
+
+| ID | Test Case | Input | Expected | Status |
+|---|---|---|---|---|
+| P2-DATA-001 | 6 cuisines | cuisines array | length = 6 | ✅ |
+| P2-DATA-002 | All slugs mapped | slugs | all 6 present | ✅ |
+| P2-DATA-003 | Valid category slugs | all items | match categories | ✅ |
+| P2-DATA-004 | All have mood_tags | all items | non-empty array | ✅ |
+| P2-DATA-005 | All have keywords | all items | non-empty array | ✅ |
+| P2-DATA-006 | Positive prices | all items | > 0 | ✅ |
+| P2-DATA-007 | Non-negative calories | all items | ≥ 0 | ✅ |
+| P2-DATA-008 | Spice level 0-5 | all items | 0 ≤ x ≤ 5 | ✅ |
+| P2-DATA-009 | 49 menu items | menuItems | length = 49 | ✅ |
+| P2-DATA-010 | 13 categories | categories | length = 13 | ✅ |
 
 ---
 

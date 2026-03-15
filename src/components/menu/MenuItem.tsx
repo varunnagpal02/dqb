@@ -17,9 +17,9 @@ export default function MenuItemCard({ item }: MenuItemProps) {
   const badges = getDietaryBadges(item);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex flex-col">
+    <div className="glass-card overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex flex-col">
       {/* Image placeholder */}
-      <div className="relative h-48 bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
+      <div className="relative h-48 bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
         <span className="text-6xl">
           {item.is_vegetarian ? "🥬" : "🍗"}
         </span>
@@ -60,7 +60,7 @@ export default function MenuItemCard({ item }: MenuItemProps) {
         </p>
 
         {/* Macros */}
-        <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+        <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
           <span title="Calories">🔥 {formatMacro(item.calories, "cal")}</span>
           <span title="Protein">💪 {formatMacro(item.protein_g, "g")}</span>
           <span title="Carbs">🌾 {formatMacro(item.carbs_g, "g")}</span>
@@ -80,7 +80,7 @@ export default function MenuItemCard({ item }: MenuItemProps) {
                   onClick={() =>
                     updateQuantity(item.id, cartItem.quantity - 1)
                   }
-                  className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center hover:bg-orange-200 transition-colors"
+                  className="w-8 h-8 rounded-full bg-orange-600/20 text-orange-400 flex items-center justify-center hover:bg-orange-600/30 transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>

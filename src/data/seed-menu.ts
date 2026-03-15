@@ -52,6 +52,7 @@ export interface SeedMenuItem {
   mood_tags: string[];
   keywords: string[];
   sort_order: number;
+  is_recommended?: boolean;
 }
 
 export const menuItems: SeedMenuItem[] = [
@@ -60,7 +61,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-starters", name: "Paneer Tikka", description: "Cubes of paneer marinated in spiced yogurt, grilled in tandoor",
     price: 10.99, is_vegetarian: true, is_vegan: false, is_gluten_free: true, is_spicy: true, spice_level: 2,
     calories: 320, protein_g: 18, carbs_g: 12, fat_g: 22, fiber_g: 2,
-    mood_tags: ["comfort", "celebratory"], keywords: ["paneer", "tikka", "tandoor", "grilled"], sort_order: 1,
+    mood_tags: ["comfort", "celebratory", "dinner", "lunch"], keywords: ["paneer", "tikka", "tandoor", "grilled"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "ni-starters", name: "Chicken Seekh Kebab", description: "Minced chicken mixed with aromatic spices, grilled on skewers",
@@ -72,7 +73,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-starters", name: "Samosa (2 pcs)", description: "Crispy pastry filled with spiced potatoes and peas",
     price: 5.99, is_vegetarian: true, is_vegan: true, is_gluten_free: false, is_spicy: false, spice_level: 1,
     calories: 340, protein_g: 6, carbs_g: 42, fat_g: 16, fiber_g: 3,
-    mood_tags: ["comfort", "light"], keywords: ["samosa", "crispy", "potato", "snack"], sort_order: 3,
+    mood_tags: ["comfort", "light", "deal"], keywords: ["samosa", "crispy", "potato", "snack"], sort_order: 3,
   },
   {
     category_slug: "ni-starters", name: "Aloo Tikki", description: "Crispy potato patties served with mint and tamarind chutney",
@@ -84,7 +85,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-starters", name: "Tandoori Chicken (Half)", description: "Chicken marinated in yogurt and spices, roasted in clay oven",
     price: 13.99, is_vegetarian: false, is_vegan: false, is_gluten_free: true, is_spicy: true, spice_level: 3,
     calories: 350, protein_g: 42, carbs_g: 8, fat_g: 16, fiber_g: 0,
-    mood_tags: ["spicy", "healthy", "filling"], keywords: ["chicken", "tandoori", "roasted", "high-protein"], sort_order: 5,
+    mood_tags: ["spicy", "healthy", "filling", "dinner"], keywords: ["chicken", "tandoori", "roasted", "high-protein"], sort_order: 5,
   },
 
   // ===== NORTH INDIAN — MAIN COURSE =====
@@ -92,19 +93,19 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-main-course", name: "Butter Chicken", description: "Tender chicken in rich, creamy tomato-butter sauce",
     price: 15.99, is_vegetarian: false, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 1,
     calories: 490, protein_g: 30, carbs_g: 18, fat_g: 32, fiber_g: 2,
-    mood_tags: ["comfort", "celebratory", "filling"], keywords: ["butter", "chicken", "creamy", "tomato", "curry"], sort_order: 1,
+    mood_tags: ["comfort", "celebratory", "filling", "dinner", "lunch"], keywords: ["butter", "chicken", "creamy", "tomato", "curry"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "ni-main-course", name: "Palak Paneer", description: "Cottage cheese cubes in smooth, spiced spinach gravy",
     price: 13.99, is_vegetarian: true, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 1,
     calories: 350, protein_g: 20, carbs_g: 14, fat_g: 24, fiber_g: 5,
-    mood_tags: ["healthy", "comfort"], keywords: ["paneer", "spinach", "palak", "protein", "iron"], sort_order: 2,
+    mood_tags: ["healthy", "comfort", "lunch", "dinner"], keywords: ["paneer", "spinach", "palak", "protein", "iron"], sort_order: 2,
   },
   {
     category_slug: "ni-main-course", name: "Dal Makhani", description: "Slow-cooked black lentils in buttery, creamy gravy",
     price: 12.99, is_vegetarian: true, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 1,
     calories: 380, protein_g: 16, carbs_g: 36, fat_g: 18, fiber_g: 8,
-    mood_tags: ["comfort", "filling"], keywords: ["dal", "lentils", "creamy", "protein", "fiber"], sort_order: 3,
+    mood_tags: ["comfort", "filling", "dinner", "lunch"], keywords: ["dal", "lentils", "creamy", "protein", "fiber"], sort_order: 3,
   },
   {
     category_slug: "ni-main-course", name: "Chicken Vindaloo", description: "Fiery hot Goan-style chicken curry with vinegar tang",
@@ -116,13 +117,13 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-main-course", name: "Chana Masala", description: "Chickpeas cooked in tangy, spiced tomato gravy",
     price: 11.99, is_vegetarian: true, is_vegan: true, is_gluten_free: true, is_spicy: true, spice_level: 2,
     calories: 310, protein_g: 14, carbs_g: 42, fat_g: 10, fiber_g: 12,
-    mood_tags: ["healthy", "comfort"], keywords: ["chana", "chickpea", "vegan", "protein", "fiber"], sort_order: 5,
+    mood_tags: ["healthy", "comfort", "lunch", "deal"], keywords: ["chana", "chickpea", "vegan", "protein", "fiber"], sort_order: 5,
   },
   {
     category_slug: "ni-main-course", name: "Rogan Josh", description: "Aromatic Kashmiri lamb curry with rich red gravy",
     price: 17.99, is_vegetarian: false, is_vegan: false, is_gluten_free: true, is_spicy: true, spice_level: 3,
     calories: 480, protein_g: 36, carbs_g: 10, fat_g: 32, fiber_g: 2,
-    mood_tags: ["celebratory", "comfort", "filling"], keywords: ["lamb", "kashmiri", "rogan", "josh", "curry"], sort_order: 6,
+    mood_tags: ["celebratory", "comfort", "filling", "dinner"], keywords: ["lamb", "kashmiri", "rogan", "josh", "curry"], sort_order: 6,
   },
   {
     category_slug: "ni-main-course", name: "Aloo Gobi", description: "Potatoes and cauliflower cooked with turmeric and cumin",
@@ -134,7 +135,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-main-course", name: "Paneer Butter Masala", description: "Paneer cubes in velvety tomato-cashew cream sauce",
     price: 14.99, is_vegetarian: true, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 1,
     calories: 440, protein_g: 18, carbs_g: 20, fat_g: 34, fiber_g: 2,
-    mood_tags: ["comfort", "celebratory", "filling"], keywords: ["paneer", "butter", "masala", "creamy", "rich"], sort_order: 8,
+    mood_tags: ["comfort", "celebratory", "filling", "dinner", "lunch"], keywords: ["paneer", "butter", "masala", "creamy", "rich"], sort_order: 8, is_recommended: true,
   },
 
   // ===== NORTH INDIAN — BREADS =====
@@ -160,7 +161,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-breads", name: "Stuffed Paratha", description: "Whole wheat flatbread stuffed with spiced potatoes",
     price: 4.99, is_vegetarian: true, is_vegan: true, is_gluten_free: false, is_spicy: false, spice_level: 1,
     calories: 320, protein_g: 8, carbs_g: 48, fat_g: 12, fiber_g: 4,
-    mood_tags: ["comfort", "filling"], keywords: ["paratha", "stuffed", "potato", "aloo"], sort_order: 4,
+    mood_tags: ["comfort", "filling", "breakfast"], keywords: ["paratha", "stuffed", "potato", "aloo"], sort_order: 4,
   },
 
   // ===== NORTH INDIAN — RICE & BIRYANI =====
@@ -168,7 +169,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ni-rice-biryani", name: "Chicken Biryani", description: "Fragrant basmati rice layered with spiced chicken and saffron",
     price: 14.99, is_vegetarian: false, is_vegan: false, is_gluten_free: true, is_spicy: true, spice_level: 2,
     calories: 520, protein_g: 28, carbs_g: 58, fat_g: 18, fiber_g: 2,
-    mood_tags: ["celebratory", "comfort", "filling"], keywords: ["biryani", "chicken", "rice", "saffron", "basmati"], sort_order: 1,
+    mood_tags: ["celebratory", "comfort", "filling", "lunch", "dinner"], keywords: ["biryani", "chicken", "rice", "saffron", "basmati"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "ni-rice-biryani", name: "Veg Biryani", description: "Basmati rice with mixed vegetables, nuts and aromatic spices",
@@ -188,13 +189,13 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "si-dosas", name: "Masala Dosa", description: "Crispy rice crepe filled with spiced potato filling, served with sambar and chutney",
     price: 10.99, is_vegetarian: true, is_vegan: true, is_gluten_free: true, is_spicy: false, spice_level: 1,
     calories: 350, protein_g: 8, carbs_g: 52, fat_g: 12, fiber_g: 4,
-    mood_tags: ["comfort", "light"], keywords: ["dosa", "masala", "crispy", "south-indian", "crepe"], sort_order: 1,
+    mood_tags: ["comfort", "light", "breakfast", "lunch"], keywords: ["dosa", "masala", "crispy", "south-indian", "crepe"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "si-dosas", name: "Plain Dosa", description: "Thin, crispy rice and lentil crepe served with chutneys and sambar",
     price: 8.99, is_vegetarian: true, is_vegan: true, is_gluten_free: true, is_spicy: false, spice_level: 0,
     calories: 240, protein_g: 6, carbs_g: 38, fat_g: 8, fiber_g: 2,
-    mood_tags: ["light", "healthy"], keywords: ["dosa", "plain", "crispy", "simple"], sort_order: 2,
+    mood_tags: ["light", "healthy", "breakfast"], keywords: ["dosa", "plain", "crispy", "simple"], sort_order: 2,
   },
   {
     category_slug: "si-dosas", name: "Mysore Masala Dosa", description: "Dosa spread with spicy red chutney, filled with potato masala",
@@ -208,7 +209,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "si-mains", name: "Idli Sambar (4 pcs)", description: "Steamed rice cakes served with lentil soup and coconut chutney",
     price: 7.99, is_vegetarian: true, is_vegan: true, is_gluten_free: true, is_spicy: false, spice_level: 0,
     calories: 260, protein_g: 10, carbs_g: 48, fat_g: 4, fiber_g: 4,
-    mood_tags: ["light", "healthy"], keywords: ["idli", "sambar", "steamed", "healthy", "breakfast"], sort_order: 1,
+    mood_tags: ["light", "healthy", "breakfast"], keywords: ["idli", "sambar", "steamed", "healthy", "breakfast"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "si-mains", name: "Medu Vada (3 pcs)", description: "Crispy fried lentil donuts served with sambar and chutney",
@@ -220,7 +221,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "si-mains", name: "Uttapam", description: "Thick rice pancake topped with onions, tomatoes, and chilies",
     price: 9.99, is_vegetarian: true, is_vegan: true, is_gluten_free: true, is_spicy: false, spice_level: 1,
     calories: 310, protein_g: 8, carbs_g: 46, fat_g: 10, fiber_g: 3,
-    mood_tags: ["comfort", "filling"], keywords: ["uttapam", "pancake", "onion", "tomato"], sort_order: 3,
+    mood_tags: ["comfort", "filling", "breakfast"], keywords: ["uttapam", "pancake", "onion", "tomato"], sort_order: 3,
   },
 
   // ===== INDO-CHINESE — STARTERS =====
@@ -254,13 +255,13 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "ic-noodles-rice", name: "Hakka Noodles", description: "Stir-fried noodles with vegetables and soy sauce",
     price: 10.99, is_vegetarian: true, is_vegan: true, is_gluten_free: false, is_spicy: false, spice_level: 1,
     calories: 380, protein_g: 10, carbs_g: 56, fat_g: 12, fiber_g: 3,
-    mood_tags: ["comfort", "filling"], keywords: ["noodles", "hakka", "stir-fry", "soy", "vegetables"], sort_order: 1,
+    mood_tags: ["comfort", "filling", "lunch", "dinner"], keywords: ["noodles", "hakka", "stir-fry", "soy", "vegetables"], sort_order: 1,
   },
   {
     category_slug: "ic-noodles-rice", name: "Chicken Fried Rice", description: "Wok-tossed rice with chicken, eggs, and vegetables",
     price: 12.99, is_vegetarian: false, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 1,
     calories: 440, protein_g: 22, carbs_g: 52, fat_g: 16, fiber_g: 2,
-    mood_tags: ["comfort", "filling"], keywords: ["fried", "rice", "chicken", "wok", "eggs"], sort_order: 2,
+    mood_tags: ["comfort", "filling", "lunch", "dinner"], keywords: ["fried", "rice", "chicken", "wok", "eggs"], sort_order: 2,
   },
   {
     category_slug: "ic-noodles-rice", name: "Schezwan Noodles", description: "Spicy noodles tossed in fiery Schezwan sauce with vegetables",
@@ -274,7 +275,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "sf-chaat", name: "Pani Puri (6 pcs)", description: "Crispy hollow puri filled with tangy mint water and chickpeas",
     price: 6.99, is_vegetarian: true, is_vegan: true, is_gluten_free: false, is_spicy: true, spice_level: 2,
     calories: 180, protein_g: 4, carbs_g: 28, fat_g: 6, fiber_g: 2,
-    mood_tags: ["light", "refreshing"], keywords: ["pani", "puri", "chaat", "tangy", "mint", "street-food"], sort_order: 1,
+    mood_tags: ["light", "refreshing", "deal"], keywords: ["pani", "puri", "chaat", "tangy", "mint", "street-food"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "sf-chaat", name: "Bhel Puri", description: "Puffed rice mixed with chutneys, onions, tomatoes and sev",
@@ -300,7 +301,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "sf-wraps-rolls", name: "Chicken Kathi Roll", description: "Grilled chicken wrapped in paratha with onions and green chutney",
     price: 9.99, is_vegetarian: false, is_vegan: false, is_gluten_free: false, is_spicy: true, spice_level: 2,
     calories: 380, protein_g: 24, carbs_g: 36, fat_g: 14, fiber_g: 2,
-    mood_tags: ["filling"], keywords: ["kathi", "roll", "chicken", "wrap", "paratha"], sort_order: 1,
+    mood_tags: ["filling", "lunch"], keywords: ["kathi", "roll", "chicken", "wrap", "paratha"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "sf-wraps-rolls", name: "Paneer Kathi Roll", description: "Spiced paneer wrapped in flaky paratha with mint chutney",
@@ -314,7 +315,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "d-traditional", name: "Gulab Jamun (3 pcs)", description: "Deep-fried milk dumplings soaked in rose-cardamom syrup",
     price: 5.99, is_vegetarian: true, is_vegan: false, is_gluten_free: false, is_spicy: false, spice_level: 0,
     calories: 380, protein_g: 6, carbs_g: 56, fat_g: 14, fiber_g: 0,
-    mood_tags: ["sweet", "celebratory", "comfort"], keywords: ["gulab", "jamun", "sweet", "dessert", "syrup"], sort_order: 1,
+    mood_tags: ["sweet", "celebratory", "comfort", "dinner"], keywords: ["gulab", "jamun", "sweet", "dessert", "syrup"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "d-traditional", name: "Ras Malai (2 pcs)", description: "Soft paneer patties in sweet saffron-cardamom milk",
@@ -346,13 +347,13 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "b-hot", name: "Masala Chai", description: "Spiced Indian tea with ginger, cardamom, and cinnamon",
     price: 3.49, is_vegetarian: true, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 0,
     calories: 80, protein_g: 2, carbs_g: 12, fat_g: 2, fiber_g: 0,
-    mood_tags: ["comfort", "refreshing"], keywords: ["chai", "tea", "masala", "spiced", "hot"], sort_order: 1,
+    mood_tags: ["comfort", "refreshing", "breakfast"], keywords: ["chai", "tea", "masala", "spiced", "hot"], sort_order: 1, is_recommended: true,
   },
   {
     category_slug: "b-hot", name: "Filter Coffee", description: "Strong South Indian filter coffee with frothy milk",
     price: 3.99, is_vegetarian: true, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 0,
     calories: 90, protein_g: 2, carbs_g: 10, fat_g: 4, fiber_g: 0,
-    mood_tags: ["refreshing"], keywords: ["coffee", "filter", "south-indian", "strong", "milk"], sort_order: 2,
+    mood_tags: ["refreshing", "breakfast"], keywords: ["coffee", "filter", "south-indian", "strong", "milk"], sort_order: 2,
   },
 
   // ===== BEVERAGES — COLD =====
@@ -360,7 +361,7 @@ export const menuItems: SeedMenuItem[] = [
     category_slug: "b-cold", name: "Mango Lassi", description: "Thick, creamy yogurt smoothie blended with Alphonso mango",
     price: 4.99, is_vegetarian: true, is_vegan: false, is_gluten_free: true, is_spicy: false, spice_level: 0,
     calories: 220, protein_g: 6, carbs_g: 38, fat_g: 4, fiber_g: 1,
-    mood_tags: ["refreshing", "sweet"], keywords: ["lassi", "mango", "yogurt", "smoothie", "cold"], sort_order: 1,
+    mood_tags: ["refreshing", "sweet", "lunch", "dinner"], keywords: ["lassi", "mango", "yogurt", "smoothie", "cold"], sort_order: 1,
   },
   {
     category_slug: "b-cold", name: "Sweet Lassi", description: "Traditional yogurt drink sweetened with sugar and rosewater",

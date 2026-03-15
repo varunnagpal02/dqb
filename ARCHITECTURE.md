@@ -1,6 +1,6 @@
 # 🏗️ Desi Quick Bite — Architecture Document
 
-> **Version:** 1.1 | **Date:** March 7, 2026
+> **Version:** 2.1 | **Date:** March 14, 2026
 
 ---
 
@@ -11,12 +11,17 @@
 │                      CLIENT (Browser)                       │
 │                                                             │
 │  ┌──────────┐ ┌────────┐ ┌──────────┐ ┌───────────┐ ┌───────────┐│
-│  │Menu Pages│ │  Cart  │ │ Checkout │ │AI Chatbot │ │Meal Plans ││
-│  │(SSR/SSG) │ │(Client)│ │ (Client) │ │ (Client)  │ │ (Client)  ││
+│  │Landing   │ │  Cart  │ │ Checkout │ │AI Chatbot │ │Meal Plans ││
+│  │(Location)│ │(Client)│ │ (Client) │ │ (Client)  │ │ (Client)  ││
 │  └────┬─────┘ └───┬────┘ └────┬─────┘ └─────┬─────┘ └─────┬─────┘│
-│        │            │            │               │          │
-│  CartContext ←──────┘            │         ChatState        │
-│  (localStorage)                  │         (useState)       │
+│       │            │            │               │          │      │
+│  DeliveryContext    │            │         ChatState        │      │
+│  CartContext ←──────┘            │         (useState)       │      │
+│  (both localStorage)             │                          │      │
+│  ┌──────────┐                    │                                 │
+│  │Menu Page │── AI Search ──────►/api/menu-search                  │
+│  │(QuickNav)│                                                      │
+│  └──────────┘                                                      │
 └────────┼────────────────────────┼───────────────┼───────────┘
          │                        │               │
          ▼                        ▼               ▼
@@ -110,7 +115,58 @@ POST /api/chat { message: "spicy food under $12", history: [...], sessionId: "ab
 | greeting | "Hello" / "Hi" | Welcome + capability list |
 | question | "What are your hours?" | Helpful answer |
 
-### 2.3 Order Placement Flow
+### 2.3 Delivery & Serviceability Flow (Phase 2)
+
+```
+User lands on homepage (dark glassmorphism landing — no header/footer/chatbot)
+  │
+  ├─→ Single address bar with autocomplete (50+ areas: NYC, Ontario cities)
+  │   Type → suggestions dropdown → select or free-type
+  ├─→ Select timing: "Deliver Now" or "Schedule" (date + time)
+  │
+  ▼
+parseAddressForServiceability(fullAddress) → { city, zip }
+  Supports US 5-digit ZIP and Canadian FSA postal codes
+  │
+  ▼
+checkServiceability(zip, city)
+  │
+  ├─→ Serviceable (ZIP/city/FSA match) → Green toast → /menu
+  ├─→ Not serviceable → Amber toast → /menu (checkout blocked)
+  │
+  └─→ DeliveryContext stores: address, city, zip, isServiceable, timing, hasEnteredAddress
+       Persisted in localStorage (dqb-delivery)
+       Header shows address badge (green/amber dot) — on all pages except landing
+       Checkout pre-fills address, disables "Place Order" if unserviceable
+```
+
+### 2.4 AI-Powered Menu Search Flow (Phase 2)
+
+```
+Menu Page Layout (search-first, no heading):
+  ┌──────────────────────────────────────────┐
+  │  Search Bar (glass-input, AI Search btn) │  ← Top of page
+  │  QuickNav Pills (Deals, Breakfast, etc.) │  ← Category shortcuts
+  │  Advanced Filters toggle (collapsible)   │  ← Cuisine, dietary, sort, price
+  │  Recommended Section (if no search)      │  ← Curated picks
+  │  Menu Grid                               │  ← All matching items
+  └──────────────────────────────────────────┘
+
+User types: "vegan meals under $12"
+  │
+  ├─→ Client detects smart query (contains $, protein, calories, etc.)
+  ├─→ POST /api/menu-search { query: "vegan meals under $12" }
+  │     │
+  │     ├─→ LangChain (GPT-4o-mini, temp=0.1, max 300 tokens)
+  │     │   Lightweight prompt: extract filters only (no conversation)
+  │     │   Returns: { is_vegan: true, max_price: 12, message: "..." }
+  │     │
+  │     └─→ Client applies AI filters to menu items in-page
+  │
+  └─→ Plain text query → existing client-side text search (name, desc, keywords)
+```
+
+### 2.5 Order Placement Flow
 
 ```
 Cart (localStorage) → Checkout Page
@@ -235,40 +291,63 @@ Admin logs in (email matches ADMIN_EMAIL env var)
 RootLayout
 ├── CartProvider (Context)
 │   ├── AuthProvider (Context)
-│   │   ├── Header
-│   │   │   ├── Logo
-│   │   │   ├── NavLinks (Menu, Cart, Orders, Admin)
-│   │   │   ├── CartIcon (item count badge)
-│   │   │   └── MobileNav (hamburger menu)
-│   │   │
-│   │   ├── <Page Content> (varies by route)
-│   │   │
-│   │   ├── Footer
-│   │   │   ├── Brand info
-│   │   │   ├── Quick links
-│   │   │   └── Social/contact
-│   │   │
-│   │   └── ChatWidget (floating, global)
-│   │       ├── ChatBubble (toggle button)
-│   │       ├── ChatWindow
-│   │       │   ├── ChatMessage[] (user + bot messages)
-│   │       │   ├── RecommendationCard[] (AI results — toggle Add/Remove from cart)
-│   │       │   ├── MealPlanCard (weekly meal plan with per-meal Add to Cart)
-│   │       │   ├── ScheduleBadge (scheduled order day)
-│   │       │   ├── FollowUpChip (AI-suggested follow-up)
-│   │       │   ├── QuickPrompts (chip buttons — includes Meal Plan, Schedule)
-│   │       │   └── ChatInput (text + send button)
-│   │       ├── (closed state: just the bubble icon)
-│   │       └── (cart-aware: sends cartSummary with each API request)
+│   │   ├── DeliveryProvider (Context — address, timing, serviceability)
+│   │   │   ├── LayoutShell (conditionally renders Header/Footer/ChatWidget)
+│   │   │   │   │
+│   │   │   │   ├── [Landing Page — / path] (standalone, no shell chrome)
+│   │   │   │   │   ├── Dark glassmorphism hero (bg-[#0f0f1a])
+│   │   │   │   │   ├── Single address bar + autocomplete dropdown
+│   │   │   │   │   ├── Timing pills (Deliver Now / Schedule)
+│   │   │   │   │   ├── Auth modal overlay (Sign In / Create Account)
+│   │   │   │   │   └── Trust badges (No Seed Oils, Organic, Homemade, AI)
+│   │   │   │   │
+│   │   │   │   ├── Header (all pages except /)
+│   │   │   │   │   ├── Logo
+│   │   │   │   │   ├── NavLinks (Home, Menu, Meal Plans, Orders)
+│   │   │   │   │   ├── DeliveryBadge (address + green/amber dot)
+│   │   │   │   │   ├── CartIcon (item count badge)
+│   │   │   │   │   └── MobileNav (hamburger menu)
+│   │   │   │   │
+│   │   │   │   ├── <Page Content> (varies by route)
+│   │   │   │   │   ├── Menu Page (search bar top, QuickNav, filters, recommended)
+│   │   │   │   │   ├── Cart Page
+│   │   │   │   │   ├── Checkout (serviceability gate, pre-filled address)
+│   │   │   │   │   ├── Meal Plans
+│   │   │   │   │   └── ... (other pages)
+│   │   │   │   │
+│   │   │   │   ├── Footer (all pages except /)
+│   │   │   │   └── ChatWidget (floating, all pages except /)
 ```
 
 ---
 
-## 6. State Management
+## 6. Design System — Dark Glassmorphism
+
+All user-facing pages use a unified dark glassmorphism theme:
+
+| Token | Value | Usage |
+|---|---|---|
+| `--background` | `#0f0f1a` | Global body background |
+| `--foreground` | `#f1f5f9` | Primary text color |
+| `.glass-card` | `rgba(255,255,255,0.04)` + `backdrop-blur:24px` + `border:rgba(255,255,255,0.06)` | Cards, panels, sections |
+| `.glass-card-light` | `rgba(255,255,255,0.06)` variant | Lighter glass panels |
+| `.glass-input` | `rgba(255,255,255,0.08)` + orange focus ring | All text inputs |
+| Accent color | `orange-400` / `orange-500` | CTAs, prices, active pills, links |
+| Muted text | `gray-400` | Secondary text, descriptions |
+| Dividers | `border-white/[0.06]` | Section separators |
+
+**LayoutShell** (`src/components/layout/LayoutShell.tsx`): Conditionally renders Header, Footer, and ChatWidget on all routes except the landing page (`/`). The landing page has its own standalone dark layout with no shell chrome.
+
+Ambient glow effects (radial gradients) are used on the landing page and menu page for depth.
+
+---
+
+## 7. State Management
 
 | State | Storage | Scope | Persistence |
 |---|---|---|---|
 | Cart items | React Context + localStorage | Global | Survives page refresh |
+| Delivery state | React Context + localStorage | Global | Survives page refresh |
 | Auth session | Supabase Auth (cookies) | Global | Survives page refresh |
 | Chat messages | React useState | ChatWidget | Lost on page refresh |
 | Chat session ID | React useState | ChatWidget | Lost on page refresh |
@@ -277,16 +356,18 @@ RootLayout
 | Promo code | React useState (checkout) | Checkout page | Lost on navigation |
 | Menu data | Server Component fetch | Per-page | Re-fetched on navigation |
 | Admin data | Server Component fetch | Per-page | Re-fetched on navigation |
+| AI search filters | React useState (menu page) | Menu page | Lost on navigation |
 
 ---
 
-## 7. API Contract Summary
+## 8. API Contract Summary
 
 ### Public APIs (No Auth)
 ```
 GET  /api/menu?cuisine=X&vegetarian=true&maxPrice=15&search=chicken
 GET  /api/cuisines
 POST /api/chat  { message: string, history: ChatMessage[], sessionId: string, cartSummary?: string }
+POST /api/menu-search  { query: string } → { filters: ChatFilters, message: string }
 ```
 
 ### Authenticated APIs

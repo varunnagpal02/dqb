@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/context/AuthContext";
+import { useDelivery } from "@/context/DeliveryContext";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { formatPrice, calculateTax } from "@/lib/utils";
@@ -20,17 +21,18 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
   const { user } = useAuth();
+  const { delivery } = useDelivery();
 
   const [formData, setFormData] = useState({
     name: "",
     email: user?.email || "",
     phone: "",
-    address: "",
-    city: "",
-    zipCode: "",
+    address: delivery.address || "",
+    city: delivery.city || "",
+    zipCode: delivery.zipCode || "",
     instructions: "",
-    scheduleDate: "",
-    scheduleTime: "",
+    scheduleDate: delivery.scheduledDate || "",
+    scheduleTime: delivery.scheduledTime || "",
     subscribeEmail: true,
   });
 
@@ -165,6 +167,26 @@ export default function CheckoutPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
 
+      {/* Serviceability Gate */}
+      {delivery.hasEnteredAddress && !delivery.isServiceable && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">🚫</span>
+            <div>
+              <p className="font-semibold text-amber-800">
+                We&apos;re not delivering to your area yet.
+              </p>
+              <p className="text-sm text-amber-700 mt-1">
+                We&apos;re expanding fast — check back soon! You can still browse our menu and build your cart.
+              </p>
+              <a href="/" className="text-sm text-orange-600 hover:text-orange-700 font-medium mt-2 inline-block">
+                ← Change delivery address
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Form */}
         <form onSubmit={handleSubmit} className="lg:col-span-3 space-y-6">
@@ -174,7 +196,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="glass-card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">
               Contact Details
             </h2>
@@ -208,7 +230,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="glass-card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">
               Delivery Address
             </h2>
@@ -238,7 +260,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="glass-card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">
               Special Instructions
             </h2>
@@ -252,7 +274,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Promo Code */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="glass-card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">
               📅 Schedule Order
             </h2>
@@ -317,7 +339,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Promo Code */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="glass-card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">
               🎟️ Promo Code
             </h2>
@@ -365,7 +387,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Email Signup */}
-          <div className="bg-orange-50 rounded-xl border border-orange-100 p-6">
+          <div className="glass-card p-6">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -391,14 +413,17 @@ export default function CheckoutPage() {
             className="w-full"
             size="lg"
             isLoading={isSubmitting}
+            disabled={isSubmitting || (delivery.hasEnteredAddress && !delivery.isServiceable)}
           >
-            Place Order — {formatPrice(adjustedTotal)}
+            {delivery.hasEnteredAddress && !delivery.isServiceable
+              ? "Delivery Unavailable in Your Area"
+              : `Place Order — ${formatPrice(adjustedTotal)}`}
           </Button>
         </form>
 
         {/* Order Summary Sidebar */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
+          <div className="glass-card p-6 sticky top-24">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Order Summary
             </h2>
@@ -416,7 +441,7 @@ export default function CheckoutPage() {
                       Qty: {item.quantity}
                     </p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-300">
                     {formatPrice(item.menu_item.price * item.quantity)}
                   </p>
                 </div>
@@ -437,7 +462,7 @@ export default function CheckoutPage() {
                 <span>Tax (8.5%)</span>
                 <span>{formatPrice(adjustedTax)}</span>
               </div>
-              <div className="flex justify-between font-bold text-gray-900 text-lg pt-2 border-t border-gray-200">
+              <div className="flex justify-between font-bold text-gray-900 text-lg pt-2 border-t border-gray-100">
                 <span>Total</span>
                 <span>{formatPrice(adjustedTotal)}</span>
               </div>

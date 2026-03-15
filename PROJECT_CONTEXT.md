@@ -1,6 +1,6 @@
 # 🍛 Desi Quick Bite — Project Context
 
-> **Last Updated:** March 7, 2026
+> **Last Updated:** March 14, 2026 (Phase 2.1 — Dark Glassmorphism Redesign)
 
 ## Quick Reference
 
@@ -9,7 +9,7 @@
 | **Project Name** | Desi Quick Bite (DQB) |
 | **Type** | AI-enabled food ordering website |
 | **Framework** | Next.js 14 (App Router) + TypeScript |
-| **Styling** | Tailwind CSS |
+| **Styling** | Tailwind CSS + Dark Glassmorphism Design System |
 | **Database** | Supabase (PostgreSQL) |
 | **Auth** | Supabase Auth (email/password) |
 | **AI** | OpenAI GPT-4o-mini via LangChain.js |
@@ -23,25 +23,26 @@
 ```
 src/
 ├── app/                    → Next.js pages & API routes (App Router)
-│   ├── page.tsx            → Home/landing page
-│   ├── layout.tsx          → Root layout (Header, Footer, Providers)
-│   ├── menu/               → Menu browsing pages
+│   ├── page.tsx            → Dark glassmorphism landing page (single address bar + autocomplete + timing + auth)
+│   ├── layout.tsx          → Root layout (Providers incl. DeliveryProvider, LayoutShell)
+│   ├── menu/               → Search-first menu (no heading, QuickNav, AI search, enhanced filters)
 │   ├── cart/               → Shopping cart
-│   ├── checkout/           → Auth gate + order placement + schedule date/time
+│   ├── checkout/           → Order placement + serviceability gate + promo codes
 │   ├── meal-plans/         → Pre-made & custom meal plan builder
 │   ├── order-confirmation/ → Post-order confirmation
 │   ├── orders/             → Order history
 │   ├── admin/              → Admin panel (menu CRUD, order management)
 │   └── api/                → Server-side API routes
 │       ├── menu/           → GET menu data
+│       ├── menu-search/    → POST AI-powered filter extraction
 │       ├── cuisines/       → GET cuisines
 │       ├── chat/           → POST AI chatbot
 │       ├── orders/         → POST/GET orders
 │       └── admin/          → Admin CRUD APIs
 ├── components/
 │   ├── ui/                 → Reusable primitives (Button, Card, Input, Badge, Modal)
-│   ├── layout/             → Header, Footer, MobileNav
-│   ├── menu/               → MenuGrid, MenuItem, Filters, MacroDisplay
+│   ├── layout/             → LayoutShell (conditional chrome), Header (glass nav), Footer
+│   ├── menu/               → MenuGrid, MenuItem (glass-card), Filters, QuickNav, MacroDisplay
 │   ├── cart/               → CartItem, CartSummary, CartIcon
 │   ├── chatbot/            → ChatWidget, ChatMessage, RecommendationCard
 │   └── admin/              → MenuForm, OrderTable
@@ -51,9 +52,9 @@ src/
 │   ├── email.ts            → Resend email helper
 │   └── utils.ts            → Shared utility functions
 ├── hooks/                  → Custom React hooks (useCart, useAuth, useChat)
-├── context/                → React contexts (CartContext, AuthContext)
-├── types/                  → TypeScript type definitions
-└── data/                   → Seed data for menu items + menu-images.ts (image URL map)
+├── context/                → React contexts (CartContext, AuthContext, DeliveryContext)
+├── types/                  → TypeScript type definitions (incl. DeliveryState)
+└── data/                   → Seed data (menu items, serviceable areas incl. Ontario cities, menu-images)
 ```
 
 ## Key Patterns
@@ -73,7 +74,15 @@ src/
 13. **Navigation** — Header navLinks: Home, Menu, Meal Plans, Orders. Meal Plans section also featured on home page with diet category cards.
 14. **Cart-Aware Chatbot** — ChatWidget reads current cart via `useCart()`, builds a `cartSummary` string (item names, quantities, prices, total), and sends it with each `/api/chat` request. The AI system prompt dynamically includes cart contents so the chatbot can answer scheduling, checkout, and cart-related questions.
 15. **Menu Item Images** — `src/data/menu-images.ts` exports `MENU_ITEM_IMAGES` (slug → Unsplash URL) and `getMenuItemImage()` helper. Used by MenuItem cards and home page featured items with emoji fallback.
-16. **Home Page Layout** — Sections ordered: Hero → Explore Cuisines → Weekly Meal Plans → Popular Picks → AI-Powered Ordering → Clean Food Promise → Macro Banner. Content-first layout with discovery sections above promotional sections.
+16. **Home Page Layout** — Dark glassmorphism landing page with NO header/footer/chatbot (standalone via LayoutShell). Single address bar with autocomplete dropdown (50+ area suggestions including Ontario cities). Timing pills ("Deliver Now" / "Schedule"). "Find Food Near You" CTA. Auth modal overlay (Sign In / Create Account). Trust badges (No Seed Oils, Organic, Homemade, AI). Ambient glow effects for depth. Auto-navigates to /menu on form completion after serviceability check.
+17. **DeliveryContext (Phase 2)** — Global React Context (DeliveryProvider) wrapping the app. Stores address, city, ZIP, isServiceable, orderTiming (now/scheduled), scheduledDate/Time, hasEnteredAddress. Persisted in localStorage (`dqb-delivery`). Used by landing page, checkout (pre-fill + gate), and header (address badge).
+18. **Serviceability Check (Phase 2)** — Client-side ZIP/city matching via `src/data/serviceable-areas.ts`. Supports US 5-digit ZIP codes and Canadian postal codes (FSA matching). 40+ Ontario cities included (Kitchener, Waterloo, Cambridge, Guelph, Toronto, Mississauga, Brampton, Hamilton, London, Ottawa, etc.) plus NYC boroughs. Returns `{ isServiceable, message }`. Serviceable → green toast + proceed. Not serviceable → amber toast + browse-only (checkout blocked).
+19. **AI Menu Search (Phase 2)** — Search-first menu page layout (no heading). Glass-input search bar at top with AI Search button. Detects "smart" queries (containing $, protein, calories, etc.). Smart queries POST to `/api/menu-search` for LangChain filter extraction (lightweight, no chat history). Results applied as in-page filters. Falls back to text search for plain queries. Advanced filters collapsed behind toggle.
+20. **Quick-Access Nav Bar (Phase 2)** — Horizontal scrollable pill bar on menu page with 14 categories: Deals, Breakfast, Lunch, Dinner, Appetizers, Mains, Breads, Drinks, North Indian, South Indian, Indo-Chinese, Street Food, Desserts, Meal Plans. Categories filter by mood_tags, category_slug, or cuisine_slug. Meal Plans links to /meal-plans.
+21. **Recommended Items (Phase 2)** — `is_recommended` boolean on SeedMenuItem. ~10 popular items flagged. Menu page shows "⭐ Recommended for You" section when no filters are active. Default sort: recommended first.
+22. **Enhanced Filters (Phase 2)** — Sort by: Recommended, Price (asc/desc), Calories (asc), Protein (desc). Filter by: max price, max calories, max spice level. Combined with existing cuisine pills, dietary toggles, and QuickNav. Filters in collapsible glass-card section.
+23. **Dark Glassmorphism Design System** — Unified dark theme across ALL user-facing pages. Global bg `#0f0f1a`, text `#f1f5f9`. CSS classes in `globals.css`: `.glass-card` (frosted panels with `backdrop-blur:24px`), `.glass-card-light` (lighter variant), `.glass-input` (dark inputs with orange focus ring). Accent: `orange-400/500`. Dividers: `border-white/[0.06]`. All components (MenuItem, CartItem, CartSummary, Input, Button ghost variant, Header, Footer) use glass styling.
+24. **LayoutShell** — `src/components/layout/LayoutShell.tsx` conditionally renders Header, Footer, and ChatWidget. Hidden on landing page (`/`) for a clean standalone experience. Shown on all other routes.
 
 ## Environment Variables
 

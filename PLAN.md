@@ -47,7 +47,314 @@
 | F11 | **Cart-Aware Chatbot** | P0 | AI chatbot knows current cart contents; answers scheduling/checkout questions with cart context |
 | F12 | **Menu Item Images** | P0 | High-quality food photos for all menu items (Unsplash), with emoji fallback |
 
-### Phase 2 — Post-MVP (Future)
+### Phase 2 — Location-Aware Landing, Smart Search & Menu Enhancements
+
+> **Version:** 2.0  
+> **Date:** March 14, 2026  
+> **Status:** Draft — Awaiting Approval  
+> **Prerequisite:** Phase 1 complete (all 12 features shipped, 73 tests passing)
+
+#### 2.1 Phase 2 Overview
+
+Phase 2 transforms Desi Quick Bite from a browse-first experience into a **location-aware, conversion-optimized** ordering flow. The landing page becomes a clean entry gate that captures delivery context upfront (address + timing), validates serviceability, and funnels users into a redesigned menu page with AI-powered search, smart sorting, and quick-access navigation.
+
+**Core Thesis:** Users who enter their address and schedule upfront have **higher checkout conversion** because:
+1. They've already committed intent (I want food delivered HERE at THIS TIME)
+2. Unserviceable areas are caught early, not at checkout (reduces frustration)
+3. Delivery context is available throughout the session for the AI chatbot
+
+#### 2.2 Feature Breakdown
+
+| # | Feature | Priority | Description |
+|---|---|---|---|
+| P2-F1 | **Location-Aware Landing Page** | P0 | New clean landing page: address input + "Order Now" / schedule time picker. On entry, auto-validates serviceability and navigates directly to `/menu` (no explicit button). Stores address + timing in context. Clean branding: "Homemade goodness on the go", health/organic messaging. |
+| P2-F2 | **Serviceability Check** | P0 | Client-side serviceable area validation (configurable ZIP/city list). Serviceable → green checkmark → proceed to menu. Unserviceable → amber banner "We're not in your area yet — but we're expanding! Browse our menu anyway." → allows menu browsing but **blocks checkout**. |
+| P2-F3 | **Signup/Register on Landing** | P0 | Optional signup/login section below address+time on landing page. "Already have an account? Sign in" / "Create account" links. Uses existing Supabase Auth. Pre-fills saved address if user is logged in. |
+| P2-F4 | **Checkout Serviceability Gate** | P0 | Checkout page checks `isServiceable` from context. If unserviceable: shows prominent banner — "🚫 Delivery is not available in your area at this time. We're expanding — check back soon!" Disables "Place Order" button. User can still browse menu, build cart, use chatbot. |
+| P2-F5 | **AI-Powered Menu Search** | P0 | Search bar on menu page accepts natural language queries like "food under $20", "high protein vegan meals", "spicy comfort food". Sends query to `/api/chat` (or new lightweight `/api/search` endpoint) → parses intent + filters → renders filtered menu items in-page (same grid). Falls back to text search for simple queries. |
+| P2-F6 | **Recommended/Popular Items First** | P0 | Menu page shows "Recommended for You" section at top (items tagged with `mood_tags: ["popular"]` or a new `is_recommended` flag). Sorted by recommendation score before other items. |
+| P2-F7 | **Quick-Access Navigation Bar** | P0 | Horizontal scrollable icon bar at top of menu page with Indian food categories: 🏷️ Deals, 🌅 Breakfast, 🍛 Lunch, 🌙 Dinner, 🥘 Appetizers, 🍲 Mains, 🫓 Breads, 🥤 Drinks, 🍛 North Indian, 🥘 South Indian, 🥡 Indo-Chinese, 🍢 Street Food, 🍮 Desserts, 📋 Meal Plans. Tapping a category filters the menu grid to that food type. Meal Plans links to `/meal-plans`. |
+| P2-F8 | **Enhanced Sorting & Filters** | P0 | Add sort options: Price (low/high), Calories (low/high), Protein (high/low), Rating/Popularity. Add filter options: Price range slider, Calorie range, Spice level selector. Combine with existing cuisine + dietary filters. |
+| P2-F9 | **Preserve All Phase 1 Features** | P0 | All existing features remain functional: AI chatbot (cart-aware), meal plans page, order scheduling, promo codes, admin panel, cart toggle in recommendations. |
+| P2-F10 | **Documentation Update** | P0 | Update ARCHITECTURE.md, PROJECT_CONTEXT.md with new components, contexts, data flows. |
+| P2-F11 | **Test Plan & Execution** | P0 | New comprehensive test plan covering all Phase 2 features + regression for Phase 1. Target: all tests passing. |
+
+#### 2.3 Detailed Technical Design
+
+##### P2-F1: Location-Aware Landing Page (`src/app/page.tsx`)
+
+**New Page Layout:**
+```
+┌──────────────────────────────────────────────┐
+│            🍛 Desi Quick Bite                │
+│     "Homemade goodness on the go"            │
+│                                              │
+│  ┌────────────────────────────────────────┐  │
+│  │  📍 Enter your delivery address        │  │
+│  │  ┌──────────────────────────────────┐  │  │
+│  │  │ Street address, city, ZIP...     │  │  │
+│  │  └──────────────────────────────────┘  │  │
+│  │                                        │  │
+│  │  🕐 When do you want it?              │  │
+│  │  ○ Order Now   ○ Schedule for Later    │  │
+│  │  [Date picker]  [Time slot dropdown]   │  │
+│  │                                        │  │
+│  │  (Auto-navigates to /menu once          │  │
+│  │   address + timing are entered)         │  │
+│  └────────────────────────────────────────┘  │
+│                                              │
+│  ── or ──                                    │
+│  Sign up / Log in                            │
+│                                              │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐     │
+│  │🚫 No     │ │🌿 Organic│ │🧹 No     │     │
+│  │Seed Oils │ │Ingredients│ │Preserv.  │     │
+│  └──────────┘ └──────────┘ └──────────┘     │
+└──────────────────────────────────────────────┘
+```
+
+**Behavior:**
+1. User enters address (text input with city/ZIP)
+2. User selects "Order Now" or "Schedule" (date + time)
+3. On completing both fields → serviceability check runs automatically, navigates to `/menu` (no button click needed)
+4. Serviceable → redirect to `/menu` with green toast "Delivering to [address]!"
+5. Unserviceable → amber toast "We're not in your area yet — browse our menu anyway!" → redirect to `/menu`
+6. Address + timing + serviceability stored in new `DeliveryContext`
+
+**New Context: `DeliveryContext`**
+```typescript
+interface DeliveryState {
+  address: string;
+  city: string;
+  zipCode: string;
+  isServiceable: boolean;
+  orderTiming: "now" | "scheduled";
+  scheduledDate?: string;    // ISO date
+  scheduledTime?: string;    // "11:00 AM" etc.
+  hasEnteredAddress: boolean;
+}
+```
+- Persisted in `localStorage` (`dqb-delivery`)
+- Available globally via `useDelivery()` hook
+- Pre-fills checkout address fields
+
+##### P2-F2: Serviceability Check
+
+**Implementation:**
+- Configurable list of serviceable ZIP codes / cities in `src/data/serviceable-areas.ts`
+- Client-side validation (no API call needed for MVP)
+- ZIP-code or city-name match (case-insensitive)
+- Returns `{ isServiceable: boolean, message: string }`
+
+**Serviceable Areas (Initial — configurable):**
+```typescript
+export const SERVICEABLE_ZIPS = ["10001", "10002", "10003", ...]; // NYC example
+export const SERVICEABLE_CITIES = ["New York", "Manhattan", "Brooklyn", ...];
+```
+
+**Admin can expand list** by editing the data file (future: admin UI for service areas).
+
+##### P2-F3: Signup on Landing
+
+- Compact signup/login section below the address form
+- "Already have an account? **Sign in**" link → expands inline form (email + password)
+- "New here? **Create account**" → expands signup form
+- Uses existing `AuthContext` + Supabase Auth
+- If logged in, shows "Welcome back, [name]!" with saved address pre-filled
+- Optional — user can skip and proceed as guest
+
+##### P2-F4: Checkout Serviceability Gate
+
+**Changes to `src/app/checkout/page.tsx`:**
+- Read `isServiceable` from `DeliveryContext`
+- If `!isServiceable`:
+  - Show full-width amber/red banner at top:
+    > "🚫 We're not delivering to your area yet. We're expanding fast — check back soon! You can still browse our menu and build your cart."
+  - Disable "Place Order" button (grayed out)
+  - Show "Change Address" link → redirects to landing page
+- Pre-fill address fields from `DeliveryContext` (if user entered on landing)
+
+##### P2-F5: AI-Powered Menu Search
+
+**How it works:**
+1. User types in search bar: "meals under $20" or "high protein vegan"
+2. Client detects if query is "smart" (contains price keywords like `$`, `under`, `budget`, or nutritional terms like `protein`, `calories`, `low carb`)
+3. **Smart query** → POST to `/api/menu-search` (lightweight variant of `/api/chat`):
+   - Sends only the query (no chat history needed)
+   - AI returns `{ filters: ChatFilters }` → client applies filters to menu items
+   - No conversation — just filter extraction
+4. **Plain text query** → existing client-side text search (name, description, keywords)
+5. Results render in the same MenuGrid — seamless UX
+
+**New API: `/api/menu-search`**
+```typescript
+// POST /api/menu-search
+// Body: { query: string }
+// Response: { filters: ChatFilters, message: string }
+```
+- Uses same LangChain setup but simpler prompt (just extract filters, no conversation)
+- Much cheaper per query (shorter prompt, no history)
+
+##### P2-F6: Recommended Items First
+
+**Approach:**
+- Add `is_recommended: boolean` field to `SeedMenuItem` type
+- Tag ~8-10 popular items as recommended (Butter Chicken, Chicken Biryani, Masala Dosa, Paneer Tikka, etc.)
+- Menu page renders "⭐ Recommended" section above the main grid
+- Recommended items appear first in default sort order
+- Items in recommended section also appear in their cuisine category (not removed from grid)
+
+##### P2-F7: Quick-Access Navigation Bar (Food Type Categories)
+
+**Horizontal scrollable pill/icon bar at top of menu page — tailored for Indian cuisine:**
+```
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ 🏷️ Deals │ 🌅 Breakfast │ 🍛 Lunch │ 🌙 Dinner │ 🥘 Appetizers │ 🍲 Mains │ 🫓 Breads │
+│ 🥤 Drinks │ 🍛 North Indian │ 🥘 South Indian │ 🥡 Indo-Chinese │ 🍢 Street Food │  │
+│ 🍮 Desserts │ 📋 Meal Plans                                                       │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Category → Filter Mapping:**
+| Category | Filter Behavior |
+|---|---|
+| Deals | Items tagged with `mood_tags: ["deal", "value"]` — budget-friendly picks |
+| Breakfast | Items tagged with `mood_tags: ["breakfast"]` (idli, dosa, paratha, chai, etc.) |
+| Lunch | Items tagged with `mood_tags: ["lunch"]` (mains, rice, biryani, thalis) |
+| Dinner | Items tagged with `mood_tags: ["dinner"]` (curries, biryani, tandoori) |
+| Appetizers | Category filter: `ni-starters`, `ic-starters`, `sf-chaat` |
+| Mains | Category filter: `ni-mains`, `si-mains`, `ic-noodles` |
+| Breads | Category filter: `ni-breads` |
+| Drinks | Category filter: `bv-hot`, `bv-cold` |
+| North Indian | Cuisine filter: `north-indian` |
+| South Indian | Cuisine filter: `south-indian` |
+| Indo-Chinese | Cuisine filter: `indo-chinese` |
+| Street Food | Cuisine filter: `street-food` |
+| Desserts | Cuisine filter: `desserts` |
+| Meal Plans | `<Link href="/meal-plans">` — navigates to existing meal plans page |
+
+**UX:** Horizontally scrollable on mobile, wraps on desktop. Active category highlighted in orange. Tapping toggles the filter (tap again to clear). Multiple categories can be active.
+
+##### P2-F8: Enhanced Sorting & Filters
+
+**New Sort Options** (added to existing dropdown):
+| Option | Sort Logic |
+|---|---|
+| Recommended | `is_recommended` first, then default order |
+| Price: Low → High | Ascending by price |
+| Price: High → Low | Descending by price |
+| Calories: Low → High | Ascending by calories |
+| Protein: High → Low | Descending by protein_g |
+
+**New Filter Controls:**
+- **Price Range**: Min/Max input fields (e.g., $5 – $20)
+- **Calorie Range**: Max calories slider or input
+- **Spice Level**: 1-5 selector (show items at or below selected level)
+
+#### 2.4 User Flow Diagram
+
+```
+┌───────────────────┐
+│   User lands on   │
+│   desiquickbite.com│
+└────────┬──────────┘
+         │
+         ▼
+┌───────────────────┐
+│  Landing Page     │
+│  - Enter address  │
+│  - Select timing  │
+│  - Optional signup│
+└────────┬──────────┘
+         │
+         ▼
+┌───────────────────┐     ┌─────────────────────────┐
+│ Serviceability    │────►│ NOT serviceable:        │
+│ Check             │     │ Amber banner shown      │
+│ (ZIP/city match)  │     │ User proceeds to /menu  │
+└────────┬──────────┘     │ Checkout BLOCKED later  │
+         │                └─────────────────────────┘
+         │ ✅ Serviceable
+         ▼
+┌───────────────────┐
+│  /menu page       │
+│  - Quick nav bar  │
+│  - AI search      │
+│  - Recommended    │
+│  - Full menu grid │
+│  - Enhanced sorts │
+└────────┬──────────┘
+         │
+         ▼
+┌───────────────────┐
+│  Cart → Checkout  │
+│  (address pre-    │
+│   filled from     │
+│   landing page)   │
+│  Serviceable? ──► Place Order ✅
+│  Unserviceable?─► Blocked 🚫
+└───────────────────┘
+```
+
+#### 2.5 New Files & Components
+
+| File | Type | Purpose |
+|---|---|---|
+| `src/context/DeliveryContext.tsx` | Context | Address, timing, serviceability state |
+| `src/hooks/useDelivery.ts` | Hook | Shortcut to DeliveryContext consumer |
+| `src/data/serviceable-areas.ts` | Data | Configurable ZIP/city serviceability list |
+| `src/app/api/menu-search/route.ts` | API | AI-powered filter extraction for search |
+| `src/components/menu/QuickNav.tsx` | Component | Cuisines / Deals / Meal Plans icon bar |
+| `src/components/menu/PriceFilter.tsx` | Component | Min/max price range inputs |
+| `src/components/menu/SortDropdown.tsx` | Component | Enhanced sort dropdown |
+| `src/components/landing/AddressForm.tsx` | Component | Address + timing entry form |
+| `src/components/landing/AuthSection.tsx` | Component | Inline signup/login on landing |
+
+#### 2.6 Modified Files
+
+| File | Changes |
+|---|---|
+| `src/app/page.tsx` | Complete redesign → location-aware landing |
+| `src/app/menu/page.tsx` | Add quick nav, AI search, recommended section, enhanced sort/filter |
+| `src/app/checkout/page.tsx` | Add serviceability gate, pre-fill address from DeliveryContext |
+| `src/app/layout.tsx` | Wrap with `<DeliveryProvider>` |
+| `src/data/seed-menu.ts` | Add `is_recommended` field to ~8-10 popular items. Add meal-time tags (`breakfast`, `lunch`, `dinner`) and `deal` tag to `mood_tags` for quick-nav filtering. |
+| `src/types/index.ts` | Add `DeliveryState`, `is_recommended` to MenuItem, search types |
+| `src/lib/openai.ts` | Add lightweight search prompt variant |
+| `src/components/layout/Header.tsx` | Show delivery address badge when set |
+
+#### 2.7 What's Preserved (No Breaking Changes)
+
+All Phase 1 features remain intact:
+- ✅ AI Chatbot (cart-aware, all 9 intents)
+- ✅ Meal Plans page (pre-made + custom builder)
+- ✅ Cart system (add/remove/update, localStorage)
+- ✅ Promo codes (WELCOME10, FIRST20, CLEAN5, ORGANIC15)
+- ✅ Order scheduling (date + time on checkout)
+- ✅ Admin panel (menu CRUD, order management)
+- ✅ Auth system (Supabase email/password)
+- ✅ Email notifications (Resend)
+- ✅ Quick prompts in chatbot
+- ✅ Toggle add/remove in recommendation cards
+- ✅ Meal plan cards with per-meal add to cart
+
+#### 2.8 Implementation Steps (Ordered)
+
+| Step | Task | Dependencies |
+|---|---|---|
+| 1 | Create `DeliveryContext` + `useDelivery` hook | None |
+| 2 | Create `serviceable-areas.ts` data file | None |
+| 3 | Redesign landing page (`page.tsx`) with address form + auth section | Steps 1-2 |
+| 4 | Add `is_recommended` to seed data + types | None |
+| 5 | Create `/api/menu-search` endpoint | `openai.ts` |
+| 6 | Redesign menu page (quick nav, AI search, recommended section, enhanced sorting/filters) | Steps 4-5 |
+| 7 | Add serviceability gate to checkout | Step 1 |
+| 8 | Wrap layout with DeliveryProvider | Step 1 |
+| 9 | Update Header with delivery address badge | Step 1 |
+| 10 | Update ARCHITECTURE.md + PROJECT_CONTEXT.md | Steps 1-9 |
+| 11 | Write + run comprehensive test plan | Steps 1-9 |
+
+### Phase 3 — Future Enhancements
 
 | # | Feature | Priority |
 |---|---|---|
@@ -57,6 +364,9 @@
 | F16 | Reviews & ratings | P2 |
 | F17 | Loyalty/rewards program | P3 |
 | F18 | Multi-language support | P3 |
+| F19 | Google Maps autocomplete for address | P1 |
+| F20 | Admin UI for managing serviceable areas | P2 |
+| F21 | Deals/promo tagging for menu items (admin) | P2 |
 
 ---
 

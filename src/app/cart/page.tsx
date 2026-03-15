@@ -20,7 +20,7 @@ export default function CartPage() {
         </p>
         <Link
           href="/menu"
-          className="mt-6 inline-flex items-center bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+          className="mt-6 inline-flex items-center bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-500 transition-colors"
         >
           Browse Menu
         </Link>

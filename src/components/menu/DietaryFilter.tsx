@@ -30,8 +30,8 @@ export function DietaryFilter({ filters, onToggle }: DietaryFilterProps) {
           className={cn(
             "px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border",
             opt.active
-              ? "bg-orange-50 border-orange-300 text-orange-700"
-              : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+              ? "bg-orange-50 border-orange-200 text-orange-600"
+              : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
           )}
         >
           {opt.label}

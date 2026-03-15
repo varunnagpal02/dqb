@@ -69,7 +69,7 @@ export default function OrdersPage() {
         </p>
         <Link
           href="/auth/signin"
-          className="mt-6 inline-flex items-center bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+          className="mt-6 inline-flex items-center bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-500 transition-colors"
         >
           Sign In
         </Link>
@@ -98,7 +98,7 @@ export default function OrdersPage() {
           </p>
           <Link
             href="/menu"
-            className="mt-6 inline-flex items-center bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+            className="mt-6 inline-flex items-center bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-500 transition-colors"
           >
             Browse Menu
           </Link>
@@ -115,7 +115,7 @@ export default function OrdersPage() {
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                className="glass-card p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                   <div>
@@ -147,7 +147,7 @@ export default function OrdersPage() {
                   ))}
                 </div>
 
-                <div className="border-t border-gray-200 mt-3 pt-3 flex justify-between">
+                <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between">
                   <span className="font-semibold text-gray-900">Total</span>
                   <span className="font-bold text-orange-600">
                     {formatPrice(order.total_amount)}
